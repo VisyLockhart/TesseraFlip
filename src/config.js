@@ -13,7 +13,7 @@
       '>': 'stepForward',
       s: 'saveFrame',
     }),
-    ui: Object.freeze({ defaultOpacity: 94, minOpacity: 20 }),
+    ui: Object.freeze({ defaultOpacity: 94, minOpacity: 20, sliderFloor: 0.5 }),
     step: Object.freeze({ multipliers: Object.freeze([1, 2, 4, 8]), defaultFps: 30, sampleSize: 30 }),
     selectors: Object.freeze({
       player: ['#movie_player', '.html5-video-player'],

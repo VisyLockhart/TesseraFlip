@@ -21,6 +21,7 @@
         "src/stepper.js",
         "src/frame.js",
         "src/keys.js",
+        "src/slider.js",
         "src/ui.js",
         "src/main.js"
       ],

@@ -29,15 +29,8 @@
     '.ang{margin-left:auto;align-self:center;font-size:12px;color:rgba(255,255,255,.65)}',
     '.op{display:flex;align-items:center;gap:8px;margin-top:8px}',
     '.oplbl{font-size:11px;color:rgba(255,255,255,.65);white-space:nowrap}',
-    '.trk{position:relative;flex:1}',
-    'input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:20px;margin:0;background:transparent;cursor:pointer}',
-    'input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#5b738a}',
-    'input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#d2a95a;border:2px solid #14181f}',
-    'input[type=range]:focus-visible{outline:2px solid #3ea6ff;outline-offset:2px;border-radius:4px}',
-    '.bubble{position:absolute;bottom:24px;min-width:34px;padding:2px 6px;box-sizing:border-box;text-align:center;font-weight:500;font-size:12px;background:#1a2430;border:1px solid #4a5d70;border-radius:4px;transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .12s}',
-    '.trk:hover .bubble,.trk:focus-within .bubble{opacity:1}',
     'svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
-  ].join('\n');
+  ].join('\n') + '\n' + TF.sliderCss;
 
   function createUI(opts) {
     const doc = opts.document;
@@ -53,8 +46,7 @@
     let host = null;
     let angleEl = null;
     let metaEl = null;
-    let range = null;
-    let bubble = null;
+    let slider = null;
     let stepBtns = [];
     const chips = new Map();
     let curStep = null;
@@ -102,6 +94,7 @@
       open = v;
       host.style.display = v ? 'block' : 'none';
       btn.setAttribute('aria-expanded', String(v));
+      if (!v && slider) slider.hideBubble();
       if (v) doc.addEventListener('pointerdown', onOutside, true);
       else doc.removeEventListener('pointerdown', onOutside, true);
     }
@@ -132,19 +125,13 @@
       }, 2500);
     }
 
-    // Opacity only changes the panel background, so the buttons stay legible.
+    // Opacity changes the panel background; the slider's own track and thumb
+    // follow it down to a floor so they stay usable.
     function applyOpacity() {
       if (!host) return;
       host.style.setProperty('--a', String(opacity / 100));
-      if (range) {
-        range.value = String(opacity);
-        const min = Number(range.min);
-        const max = Number(range.max);
-        const pct = (opacity - min) / (max - min);
-        bubble.textContent = String(opacity);
-        // 16px thumb: keep the bubble centred over it at both ends.
-        bubble.style.left = 'calc(' + pct * 100 + '% + ' + (0.5 - pct) * 16 + 'px)';
-      }
+      host.style.setProperty('--sa', String(TF.sliderAlpha(opacity, cfg.ui.sliderFloor)));
+      if (slider) slider.setValue(opacity);
     }
 
     function build() {
@@ -208,25 +195,23 @@
       );
       const frameRow = el('div', { class: 'row', role: 'group', 'aria-label': t('frameTitle') }, [saveBtn, copyBtn]);
 
-      range = el('input', {
-        type: 'range',
-        min: String(cfg.ui.minOpacity),
-        max: '100',
-        step: '1',
-        value: String(opacity),
-        'aria-label': t('opacity'),
-      });
-      bubble = el('div', { class: 'bubble' });
-      range.addEventListener('input', () => {
-        opacity = Number(range.value);
-        applyOpacity();
-      });
-      range.addEventListener('change', () => {
-        if (actions.setOpacity) actions.setOpacity(opacity);
+      slider = TF.createSlider({
+        document: doc,
+        min: cfg.ui.minOpacity,
+        max: 100,
+        value: opacity,
+        label: t('opacity'),
+        onInput: (v) => {
+          opacity = v;
+          applyOpacity();
+        },
+        onChange: (v) => {
+          if (actions.setOpacity) actions.setOpacity(v);
+        },
       });
       const opRow = el('div', { class: 'op' }, [
         el('span', { class: 'oplbl', text: t('opacity') }),
-        el('div', { class: 'trk' }, [bubble, range]),
+        slider.el,
       ]);
 
       const panel = el('div', { class: 'panel', role: 'dialog', 'aria-label': t('toolsTitle') }, [
