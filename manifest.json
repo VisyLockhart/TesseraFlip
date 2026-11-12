@@ -14,10 +14,12 @@
       ],
       "js": [
         "src/config.js",
+        "src/i18n.js",
         "src/locator.js",
         "src/controller.js",
         "src/rotation.js",
         "src/keys.js",
+        "src/ui.js",
         "src/main.js"
       ],
       "run_at": "document_idle",

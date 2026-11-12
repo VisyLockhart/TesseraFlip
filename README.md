@@ -12,9 +12,10 @@ UI: one icon in the player control bar opens a compact panel over the video.
 
 ## Status
 
-- Done: player/video locator, bounded idempotent attach controller, 90° rotation.
+- Done: player/video locator, bounded idempotent attach controller, 90° rotation, control-bar button with a panel (rotation controls).
 - Shortcuts for now: `[` rotate left, `]` rotate right (ignored while typing). A new video starts upright.
-- Not yet: control-bar button and panel, frame stepping, save frame.
+- Button is inserted right before YouTube's settings button; if that anchor is missing or YouTube keeps removing it, a floating button on the player is used instead.
+- Not yet: frame stepping, save frame.
 
 ## Robustness rules
 

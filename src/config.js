@@ -9,6 +9,10 @@
     keys: Object.freeze({ '[': 'rotateLeft', ']': 'rotateRight' }),
     selectors: Object.freeze({
       player: ['#movie_player', '.html5-video-player'],
+      // Anchor for our control-bar button: we insert right before it, so we
+      // do not depend on how YouTube groups the left/right control containers.
+      settingsButton: ['.ytp-settings-button'],
+      controls: ['.ytp-chrome-bottom'],
       video: [
         '#movie_player video.html5-main-video',
         '#movie_player video',

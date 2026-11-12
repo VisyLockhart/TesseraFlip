@@ -7,3 +7,28 @@ video[data-tf-rot] {
   transform: rotate(var(--tf-rot, 0deg)) scale(var(--tf-scale, 1)) !important;
   transform-origin: 50% 50% !important;
 }
+
+/* Control-bar entry button. It carries YouTube's .ytp-button class for size
+   and hover; we only style the icon and the floating fallback. */
+.tf-entry svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tf-entry[aria-expanded="true"] svg { stroke: #3ea6ff; }
+.tf-entry.tf-float {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  transition: opacity 0.25s;
+}
+.html5-video-player.ytp-autohide .tf-entry.tf-float { opacity: 0; }
