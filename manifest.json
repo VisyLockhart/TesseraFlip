@@ -3,6 +3,12 @@
   "name": "TesseraFlip",
   "version": "0.0.1",
   "description": "Rotate, step, and save YouTube frames.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "minimum_chrome_version": "111",
   "permissions": [
     "storage"
