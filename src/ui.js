@@ -12,24 +12,30 @@
   const ICON_COPY = ['M9 9h10v11H9z', 'M5 15V4h10'];
 
   const PANEL_CSS = [
-    '.panel{box-sizing:border-box;width:248px;padding:12px;border-radius:12px;background:rgba(28,28,28,.94);color:#fff;font:13px/1.4 Roboto,Arial,"Noto Sans TC",sans-serif;box-shadow:0 4px 24px rgba(0,0,0,.4)}',
-    '.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}',
-    '.ttl{font-weight:500;font-size:14px}',
-    '.lbl{color:rgba(255,255,255,.7);font-size:12px;margin-bottom:6px}',
-    '.row{display:flex;gap:6px}',
-    'button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:32px;min-width:32px;padding:0 10px;border:1px solid rgba(255,255,255,.22);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font:inherit}',
+    '.panel{box-sizing:border-box;width:232px;padding:8px 12px 10px;border-radius:12px;background:rgba(28,28,28,var(--a,.94));color:#fff;font:13px/1.4 Roboto,Arial,"Noto Sans TC",sans-serif;text-shadow:0 0 3px rgba(0,0,0,.7);box-shadow:0 4px 24px rgba(0,0,0,.4)}',
+    '.hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}',
+    '.ttl{font-weight:500;font-size:13px}',
+    '.meta{flex:1;text-align:right;font-size:11px;white-space:nowrap;color:rgba(255,255,255,.65)}',
+    '.row{display:flex;gap:4px;margin-top:6px}',
+    '.row:first-of-type{margin-top:0}',
+    'button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:4px;height:30px;min-width:30px;padding:0 8px;border:1px solid rgba(255,255,255,.22);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font:inherit}',
     'button:hover{background:rgba(255,255,255,.18)}',
     'button:focus-visible{outline:2px solid #3ea6ff;outline-offset:1px}',
-    'button.ghost{border-color:transparent;background:transparent;min-width:28px;height:28px;padding:0}',
-    '.sec{margin-top:12px}',
-    '.grow{flex:1}',
-    '.val{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px}',
-    'button.chip{height:26px;min-width:34px;padding:0 6px}',
+    'button.ghost{border-color:transparent;background:transparent;min-width:26px;height:26px;padding:0}',
+    'button.chip{flex:1;min-width:0;padding:0}',
     'button.on{background:rgba(62,166,255,.25);border-color:#3ea6ff}',
     'button.dim,button.dim:hover{opacity:.3;cursor:not-allowed;background:rgba(255,255,255,.04);border-style:dashed}',
-    '.val.muted{color:rgba(255,255,255,.55)}',
-    '.fps{margin-left:auto;align-self:center;font-size:11px;white-space:nowrap;color:rgba(255,255,255,.6)}',
-    '.st{min-height:16px;margin-top:10px;font-size:12px;color:rgba(255,255,255,.85)}',
+    'button.grow{flex:1}',
+    '.ang{margin-left:auto;align-self:center;font-size:12px;color:rgba(255,255,255,.65)}',
+    '.op{display:flex;align-items:center;gap:8px;margin-top:8px}',
+    '.oplbl{font-size:11px;color:rgba(255,255,255,.65);white-space:nowrap}',
+    '.trk{position:relative;flex:1}',
+    'input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:20px;margin:0;background:transparent;cursor:pointer}',
+    'input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#5b738a}',
+    'input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:16px;height:16px;margin-top:-6px;border-radius:50%;background:#d2a95a;border:2px solid #14181f}',
+    'input[type=range]:focus-visible{outline:2px solid #3ea6ff;outline-offset:2px;border-radius:4px}',
+    '.bubble{position:absolute;bottom:24px;min-width:34px;padding:2px 6px;box-sizing:border-box;text-align:center;font-weight:500;font-size:12px;background:#1a2430;border:1px solid #4a5d70;border-radius:4px;transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .12s}',
+    '.trk:hover .bubble,.trk:focus-within .bubble{opacity:1}',
     'svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
   ].join('\n');
 
@@ -45,16 +51,17 @@
     let player = null;
     let btn = null;
     let host = null;
-    let label = null;
-    let stepLabel = null;
-    let fpsEl = null;
-    let statusEl = null;
+    let angleEl = null;
+    let metaEl = null;
+    let range = null;
+    let bubble = null;
     let stepBtns = [];
+    const chips = new Map();
     let curStep = null;
     let isPaused = true;
-    let valEl = null;
-    const chips = new Map();
+    let flashText = '';
     let flashTimer = null;
+    let opacity = cfg.ui.defaultOpacity;
     let mode = 'none';
     let open = false;
     let attempts = 0;
@@ -105,22 +112,39 @@
       setOpen(false);
     }
 
-    // While playing, the centre text says so (muted); while paused it shows
-    // how many frames one press jumps.
-    function renderStepLabel() {
-      if (!stepLabel) return;
-      valEl.classList.toggle('muted', !isPaused);
-      if (!isPaused) stepLabel.textContent = t('playing');
-      else if (curStep) stepLabel.textContent = t('stepSize', { n: curStep.mult });
+    // The header's right side shows flash messages first, then the play
+    // state, then the measured fps.
+    function renderMeta() {
+      if (!metaEl) return;
+      if (flashText) metaEl.textContent = flashText;
+      else if (!isPaused) metaEl.textContent = t('playing');
+      else if (curStep) metaEl.textContent = (curStep.measured ? '' : '≈') + curStep.fps + ' fps';
+      else metaEl.textContent = '';
     }
 
     function flash(text) {
-      if (!statusEl) return;
-      statusEl.textContent = text;
+      flashText = text;
+      renderMeta();
       root.clearTimeout(flashTimer);
       flashTimer = root.setTimeout(() => {
-        statusEl.textContent = '';
+        flashText = '';
+        renderMeta();
       }, 2500);
+    }
+
+    // Opacity only changes the panel background, so the buttons stay legible.
+    function applyOpacity() {
+      if (!host) return;
+      host.style.setProperty('--a', String(opacity / 100));
+      if (range) {
+        range.value = String(opacity);
+        const min = Number(range.min);
+        const max = Number(range.max);
+        const pct = (opacity - min) / (max - min);
+        bubble.textContent = String(opacity);
+        // 16px thumb: keep the bubble centred over it at both ends.
+        bubble.style.left = 'calc(' + pct * 100 + '% + ' + (0.5 - pct) * 16 + 'px)';
+      }
     }
 
     function build() {
@@ -141,32 +165,39 @@
       const style = el('style');
       style.textContent = PANEL_CSS;
 
-      label = el('div', { class: 'lbl', text: t('rotation') });
-      const rotRow = el('div', { class: 'row' }, [
+      metaEl = el('span', { class: 'meta', 'aria-live': 'polite' });
+      const header = el('div', { class: 'hd' }, [
+        el('span', { class: 'ttl', text: 'TesseraFlip' }),
+        metaEl,
+        panelButton('ghost', t('close'), [svg(ICON_CLOSE)], () => {
+          setOpen(false);
+          btn.focus();
+        }),
+      ]);
+
+      angleEl = el('span', { class: 'ang', text: '0°' });
+      const rotRow = el('div', { class: 'row', role: 'group', 'aria-label': t('rotation') }, [
         panelButton('', t('rotateLeft'), [svg(ICON_ROT_RIGHT, true)], () => actions.rotateLeft()),
         panelButton('', t('rotateRight'), [svg(ICON_ROT_RIGHT)], () => actions.rotateRight()),
         panelButton('', t('reset'), [el('span', { text: t('reset') })], () => actions.resetRotation()),
+        angleEl,
       ]);
 
       const doStep = (fn) => {
         if (fn() === false) flash(t('pauseFirst'));
       };
-      stepLabel = el('span');
       const back = panelButton('', t('stepBack'), [svg(ICON_PREV)], () => doStep(actions.stepBack));
       const fwd = panelButton('', t('stepForward'), [svg(ICON_NEXT)], () => doStep(actions.stepForward));
       stepBtns = [back, fwd];
-      valEl = el('div', { class: 'val' }, [stepLabel]);
-      const stepRow = el('div', { class: 'row' }, [back, valEl, fwd]);
-      fpsEl = el('span', { class: 'fps' });
-      const chipRow = el('div', { class: 'row', style: 'margin-top:6px' });
+      const stepRow = el('div', { class: 'row', role: 'group', 'aria-label': t('stepTitle') }, [back]);
       cfg.step.multipliers.forEach((m) => {
         const c = panelButton('chip', t('stepMult', { n: m }), [el('span', { text: 'x' + m })], () =>
           actions.setMultiplier(m)
         );
         chips.set(m, c);
-        chipRow.appendChild(c);
+        stepRow.appendChild(c);
       });
-      chipRow.appendChild(fpsEl);
+      stepRow.appendChild(fwd);
 
       const report = (okKey) => (r) => flash(r && r.ok ? t(okKey) : t('captureFailed'));
       const saveBtn = panelButton('grow', t('saveFrameTip'), [svg(ICON_SAVE), el('span', { text: t('saveFrame') })], () =>
@@ -175,27 +206,39 @@
       const copyBtn = panelButton('', t('copyFrame'), [svg(ICON_COPY)], () =>
         Promise.resolve(actions.copyFrame()).then(report('copied'))
       );
-      statusEl = el('div', { class: 'st', 'aria-live': 'polite' });
+      const frameRow = el('div', { class: 'row', role: 'group', 'aria-label': t('frameTitle') }, [saveBtn, copyBtn]);
 
-      const header = el('div', { class: 'hd' }, [
-        el('span', { class: 'ttl', text: 'TesseraFlip' }),
-        panelButton('ghost', t('close'), [svg(ICON_CLOSE)], () => {
-          setOpen(false);
-          btn.focus();
-        }),
+      range = el('input', {
+        type: 'range',
+        min: String(cfg.ui.minOpacity),
+        max: '100',
+        step: '1',
+        value: String(opacity),
+        'aria-label': t('opacity'),
+      });
+      bubble = el('div', { class: 'bubble' });
+      range.addEventListener('input', () => {
+        opacity = Number(range.value);
+        applyOpacity();
+      });
+      range.addEventListener('change', () => {
+        if (actions.setOpacity) actions.setOpacity(opacity);
+      });
+      const opRow = el('div', { class: 'op' }, [
+        el('span', { class: 'oplbl', text: t('opacity') }),
+        el('div', { class: 'trk' }, [bubble, range]),
       ]);
+
       const panel = el('div', { class: 'panel', role: 'dialog', 'aria-label': t('toolsTitle') }, [
         header,
-        el('div', {}, [label, rotRow]),
-        el('div', { class: 'sec' }, [el('div', { class: 'lbl', text: t('stepTitle') }), stepRow, chipRow]),
-        el('div', { class: 'sec' }, [
-          el('div', { class: 'lbl', text: t('frameTitle') }),
-          el('div', { class: 'row' }, [saveBtn, copyBtn]),
-        ]),
-        statusEl,
+        rotRow,
+        stepRow,
+        frameRow,
+        opRow,
       ]);
       shadow.appendChild(style);
       shadow.appendChild(panel);
+      applyOpacity();
 
       // Keep the player from reacting to clicks or keys meant for our panel.
       STOP.forEach((ev) => host.addEventListener(ev, (e) => e.stopPropagation()));
@@ -333,20 +376,22 @@
         if (mode !== 'bar' || !btn.isConnected || !host.isConnected) scheduleRemount();
       },
       setAngle(a) {
-        if (!label) return;
-        label.textContent = a === 0 ? t('rotation') : t('rotationNow', { n: a });
+        if (angleEl) angleEl.textContent = a + '°';
       },
       setPaused(paused) {
         isPaused = paused;
         stepBtns.forEach((b) => b.classList.toggle('dim', !paused));
-        renderStepLabel();
+        renderMeta();
       },
       setStep(st) {
-        if (!stepLabel) return;
         curStep = st;
         chips.forEach((c, m) => c.classList.toggle('on', m === st.mult));
-        fpsEl.textContent = (st.measured ? '' : '\u2248') + st.fps + ' fps';
-        renderStepLabel();
+        renderMeta();
+      },
+      setOpacity(v) {
+        if (!Number.isFinite(v)) return;
+        opacity = Math.min(100, Math.max(cfg.ui.minOpacity, Math.round(v)));
+        applyOpacity();
       },
       flash,
       getMode: () => mode,

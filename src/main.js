@@ -6,11 +6,12 @@
   let ui = null;
   let video = null;
 
-  const storage =
+  // One small key/value store for all remembered settings.
+  const settings =
     typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local
       ? {
-          load: (cb) => chrome.storage.local.get('multiplier', (r) => cb(r && r.multiplier)),
-          save: (v) => chrome.storage.local.set({ multiplier: v }),
+          get: (key, cb) => chrome.storage.local.get(key, (r) => cb(r && r[key])),
+          set: (key, v) => chrome.storage.local.set({ [key]: v }),
         }
       : null;
 
@@ -20,7 +21,10 @@
   });
 
   const stepper = TF.createStepper({
-    storage,
+    storage: settings && {
+      load: (cb) => settings.get('multiplier', cb),
+      save: (v) => settings.set('multiplier', v),
+    },
     onChange: (st) => {
       if (!ui) return;
       ui.setStep(st);
@@ -50,8 +54,17 @@
       setMultiplier: (m) => stepper.setMultiplier(m),
       saveFrame,
       copyFrame,
+      setOpacity: (v) => {
+        try {
+          if (settings) settings.set('opacity', v);
+        } catch (_) {}
+      },
     },
   });
+
+  try {
+    if (settings) settings.get('opacity', (v) => ui.setOpacity(Number(v)));
+  } catch (_) {}
 
   const controller = TF.createController({
     document,

@@ -16,6 +16,7 @@ UI: one icon in the player control bar opens a compact panel over the video.
 - Shortcuts (ignored while typing): `[` rotate left, `]` rotate right, `<` / `>` step back / forward one frame group while paused (while playing they keep YouTube's speed change), `S` save the frame.
 - Frame step multiplier x1/x2/x4/x8 is remembered. fps is measured with `requestVideoFrameCallback` (30 until measured, shown with a leading ≈).
 - Saved/copied frames are PNG at the video's native resolution and are rotated the same way as the player. Protected (DRM) videos may give a black frame.
+- The panel is compact (232×180 px) with an opacity slider (20–100) that only affects the panel background; the value is remembered.
 - A new video starts upright.
 - Button is inserted right before YouTube's settings button; if that anchor is missing or YouTube keeps removing it, a floating button on the player is used instead.
 
