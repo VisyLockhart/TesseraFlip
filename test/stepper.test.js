@@ -12,6 +12,8 @@ class FakeVideo extends EventTarget {
     this.cb = null;
     this.rvfcCalls = 0;
   }
+  play() { this.paused = false; this.dispatchEvent(new Event('play')); return Promise.reject(new Error('blocked')); }
+  pause() { this.paused = true; this.dispatchEvent(new Event('pause')); }
   requestVideoFrameCallback(cb) { this.cb = cb; this.rvfcCalls++; return 1; }
   feed(mediaTime) { const cb = this.cb; this.cb = null; if (cb) cb(0, { mediaTime }); }
 }
@@ -105,4 +107,28 @@ test('detach stops the sampling loop and listeners', () => {
   v.feed(0.5);
   assert.strictEqual(v.rvfcCalls, calls);
   assert.strictEqual(s.step(1), false);
+});
+
+test('toggle: pauses a playing video, resumes a paused one, reports state', () => {
+  const v = new FakeVideo();
+  const states = [];
+  const s = createStepper({ onChange: (st) => states.push(st.paused) });
+  s.attach(v);
+  v.paused = false;
+  assert.strictEqual(s.toggle(), true);
+  assert.strictEqual(v.paused, true);
+  assert.strictEqual(s.step(1), true);
+  assert.strictEqual(s.toggle(), true);
+  assert.strictEqual(v.paused, false);
+  assert.strictEqual(s.step(1), false);
+  assert.strictEqual(states.at(-1), false);
+});
+
+test('toggle without a video is not handled; a rejected play() does not throw', async () => {
+  assert.strictEqual(createStepper({}).toggle(), false);
+  const v = new FakeVideo();
+  const s = createStepper({});
+  s.attach(v);
+  assert.doesNotThrow(() => s.toggle());
+  await new Promise((r) => setTimeout(r, 0));
 });

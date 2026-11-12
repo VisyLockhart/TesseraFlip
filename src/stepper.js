@@ -143,6 +143,17 @@
         video.currentTime = targetTime(video.currentTime, fps, dir * mult, video.duration);
         return true;
       },
+      // Pause when playing, resume when paused. false = nothing attached.
+      toggle() {
+        if (!video) return false;
+        if (video.paused) {
+          const p = video.play();
+          if (p && typeof p.catch === 'function') p.catch(() => {});
+        } else {
+          video.pause();
+        }
+        return true;
+      },
       setMultiplier(m) {
         if (!cfg.multipliers.includes(m)) return;
         mult = m;

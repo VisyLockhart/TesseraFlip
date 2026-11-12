@@ -14,6 +14,7 @@ UI: one icon in the player control bar opens a compact panel over the video.
 
 - Done: player/video locator, bounded idempotent attach controller, 90° rotation, control-bar button with a panel, frame stepping, save/copy frame.
 - Shortcuts (ignored while typing): `[` rotate left, `]` rotate right, `<` / `>` step back / forward one frame group while paused (while playing they keep YouTube's speed change), `S` save the frame.
+- A play/pause button in the panel (between rotate-right and reset) lets you pause without leaving the panel: while paused it is highlighted and frame stepping is enabled; press it again to resume playback.
 - Frame step multiplier x1/x2/x4/x8 is remembered. fps is measured with `requestVideoFrameCallback` (30 until measured, shown with a leading ≈).
 - Saved/copied frames are PNG at the video's native resolution and are rotated the same way as the player. Protected (DRM) videos may give a black frame.
 - The panel is compact (232×180 px) with an opacity slider (20–100) that only affects the panel background; the value is remembered.

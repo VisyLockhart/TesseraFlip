@@ -8,6 +8,8 @@
   const ICON_CLOSE = ['M6 6l12 12', 'M18 6L6 18'];
   const ICON_PREV = ['M15 6l-6 6 6 6'];
   const ICON_NEXT = ['M9 6l6 6-6 6'];
+  const ICON_PLAY = ['M8 5l11 7-11 7z'];
+  const ICON_PAUSE = ['M9 5v14', 'M15 5v14'];
   const ICON_SAVE = ['M12 4v10', 'M8 10l4 4 4-4', 'M5 19h14'];
   const ICON_COPY = ['M9 9h10v11H9z', 'M5 15V4h10'];
 
@@ -48,6 +50,9 @@
     let metaEl = null;
     let slider = null;
     let stepBtns = [];
+    let playBtn = null;
+    let iconPlay = null;
+    let iconPause = null;
     const chips = new Map();
     let curStep = null;
     let isPaused = true;
@@ -162,10 +167,16 @@
         }),
       ]);
 
+      iconPlay = svg(ICON_PLAY);
+      iconPause = svg(ICON_PAUSE);
+      playBtn = panelButton('', t('pauseToStep'), [iconPause, iconPlay], () => {
+        if (actions.togglePlay() === false) flash(t('captureFailed'));
+      });
       angleEl = el('span', { class: 'ang', text: '0°' });
       const rotRow = el('div', { class: 'row', role: 'group', 'aria-label': t('rotation') }, [
         panelButton('', t('rotateLeft'), [svg(ICON_ROT_RIGHT, true)], () => actions.rotateLeft()),
         panelButton('', t('rotateRight'), [svg(ICON_ROT_RIGHT)], () => actions.rotateRight()),
+        playBtn,
         panelButton('', t('reset'), [el('span', { text: t('reset') })], () => actions.resetRotation()),
         angleEl,
       ]);
@@ -366,6 +377,16 @@
       setPaused(paused) {
         isPaused = paused;
         stepBtns.forEach((b) => b.classList.toggle('dim', !paused));
+        if (playBtn) {
+          // Shows the action available: pause while playing, play while paused.
+          iconPause.style.display = paused ? 'none' : '';
+          iconPlay.style.display = paused ? '' : 'none';
+          playBtn.classList.toggle('on', paused);
+          const label = paused ? t('resumePlay') : t('pauseToStep');
+          playBtn.title = label;
+          playBtn.setAttribute('aria-label', label);
+          playBtn.setAttribute('aria-pressed', String(paused));
+        }
         renderMeta();
       },
       setStep(st) {

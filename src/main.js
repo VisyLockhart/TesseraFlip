@@ -49,6 +49,7 @@
       rotateLeft: () => rotator.rotate(-1),
       rotateRight: () => rotator.rotate(1),
       resetRotation: () => rotator.reset(),
+      togglePlay: () => stepper.toggle(),
       stepBack: () => stepper.step(-1),
       stepForward: () => stepper.step(1),
       setMultiplier: (m) => stepper.setMultiplier(m),
