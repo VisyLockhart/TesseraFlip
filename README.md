@@ -12,7 +12,9 @@ UI: one icon in the player control bar opens a compact panel over the video.
 
 ## Status
 
-Skeleton only: player/video locator and a bounded, idempotent attach controller. Features are not implemented yet.
+- Done: player/video locator, bounded idempotent attach controller, 90° rotation.
+- Shortcuts for now: `[` rotate left, `]` rotate right (ignored while typing). A new video starts upright.
+- Not yet: control-bar button and panel, frame stepping, save frame.
 
 ## Robustness rules
 

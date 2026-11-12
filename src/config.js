@@ -5,6 +5,8 @@
   // markup, this is the only file that should need editing.
   TF.config = Object.freeze({
     markerAttr: 'data-tesseraflip',
+    // Keyboard shortcuts: key -> action name.
+    keys: Object.freeze({ '[': 'rotateLeft', ']': 'rotateRight' }),
     selectors: Object.freeze({
       player: ['#movie_player', '.html5-video-player'],
       video: [

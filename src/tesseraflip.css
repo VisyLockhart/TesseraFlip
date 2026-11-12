@@ -1,0 +1,9 @@
+/* Rotation is driven by an attribute on the <video> plus two CSS variables
+   on <html>. YouTube rewrites the video's inline style (width/height/left/top)
+   but does not touch our attribute or the variables, so we never have to
+   fight it. transform does not change layout size, so it cannot feed back
+   into any ResizeObserver. */
+video[data-tf-rot] {
+  transform: rotate(var(--tf-rot, 0deg)) scale(var(--tf-scale, 1)) !important;
+  transform-origin: 50% 50% !important;
+}

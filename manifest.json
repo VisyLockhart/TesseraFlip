@@ -4,17 +4,26 @@
   "version": "0.0.1",
   "description": "Rotate, step, and save YouTube frames.",
   "minimum_chrome_version": "111",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
       "js": [
         "src/config.js",
         "src/locator.js",
         "src/controller.js",
+        "src/rotation.js",
+        "src/keys.js",
         "src/main.js"
       ],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "css": [
+        "src/tesseraflip.css"
+      ]
     }
   ]
 }
