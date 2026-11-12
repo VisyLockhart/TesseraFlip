@@ -6,7 +6,14 @@
   TF.config = Object.freeze({
     markerAttr: 'data-tesseraflip',
     // Keyboard shortcuts: key -> action name.
-    keys: Object.freeze({ '[': 'rotateLeft', ']': 'rotateRight' }),
+    keys: Object.freeze({
+      '[': 'rotateLeft',
+      ']': 'rotateRight',
+      '<': 'stepBack',
+      '>': 'stepForward',
+      s: 'saveFrame',
+    }),
+    step: Object.freeze({ multipliers: Object.freeze([1, 2, 4, 8]), defaultFps: 30, sampleSize: 30 }),
     selectors: Object.freeze({
       player: ['#movie_player', '.html5-video-player'],
       // Anchor for our control-bar button: we insert right before it, so we

@@ -18,6 +18,8 @@
         "src/locator.js",
         "src/controller.js",
         "src/rotation.js",
+        "src/stepper.js",
+        "src/frame.js",
         "src/keys.js",
         "src/ui.js",
         "src/main.js"

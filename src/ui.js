@@ -6,9 +6,13 @@
   const ICON_ENTRY = ['M12 4l7 8-7 8-7-8z', 'M20 4.5v4h-4'];
   const ICON_ROT_RIGHT = ['M21 12a9 9 0 1 1-3.2-6.9', 'M21 3.5v5h-5'];
   const ICON_CLOSE = ['M6 6l12 12', 'M18 6L6 18'];
+  const ICON_PREV = ['M15 6l-6 6 6 6'];
+  const ICON_NEXT = ['M9 6l6 6-6 6'];
+  const ICON_SAVE = ['M12 4v10', 'M8 10l4 4 4-4', 'M5 19h14'];
+  const ICON_COPY = ['M9 9h10v11H9z', 'M5 15V4h10'];
 
   const PANEL_CSS = [
-    '.panel{box-sizing:border-box;width:232px;padding:12px;border-radius:12px;background:rgba(28,28,28,.94);color:#fff;font:13px/1.4 Roboto,Arial,"Noto Sans TC",sans-serif;box-shadow:0 4px 24px rgba(0,0,0,.4)}',
+    '.panel{box-sizing:border-box;width:248px;padding:12px;border-radius:12px;background:rgba(28,28,28,.94);color:#fff;font:13px/1.4 Roboto,Arial,"Noto Sans TC",sans-serif;box-shadow:0 4px 24px rgba(0,0,0,.4)}',
     '.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}',
     '.ttl{font-weight:500;font-size:14px}',
     '.lbl{color:rgba(255,255,255,.7);font-size:12px;margin-bottom:6px}',
@@ -17,6 +21,14 @@
     'button:hover{background:rgba(255,255,255,.18)}',
     'button:focus-visible{outline:2px solid #3ea6ff;outline-offset:1px}',
     'button.ghost{border-color:transparent;background:transparent;min-width:28px;height:28px;padding:0}',
+    '.sec{margin-top:12px}',
+    '.grow{flex:1}',
+    '.val{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px}',
+    'button.chip{height:26px;min-width:34px;padding:0 6px}',
+    'button.on{background:rgba(62,166,255,.25);border-color:#3ea6ff}',
+    'button.dim{opacity:.45}',
+    '.fps{margin-left:auto;align-self:center;font-size:11px;white-space:nowrap;color:rgba(255,255,255,.6)}',
+    '.st{min-height:16px;margin-top:10px;font-size:12px;color:rgba(255,255,255,.85)}',
     'svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
   ].join('\n');
 
@@ -33,6 +45,12 @@
     let btn = null;
     let host = null;
     let label = null;
+    let stepLabel = null;
+    let fpsEl = null;
+    let statusEl = null;
+    let stepBtns = [];
+    const chips = new Map();
+    let flashTimer = null;
     let mode = 'none';
     let open = false;
     let attempts = 0;
@@ -83,6 +101,15 @@
       setOpen(false);
     }
 
+    function flash(text) {
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      root.clearTimeout(flashTimer);
+      flashTimer = root.setTimeout(() => {
+        statusEl.textContent = '';
+      }, 2500);
+    }
+
     function build() {
       if (btn) return;
       btn = el('button', {
@@ -102,11 +129,40 @@
       style.textContent = PANEL_CSS;
 
       label = el('div', { class: 'lbl', text: t('rotation') });
-      const row = el('div', { class: 'row' }, [
+      const rotRow = el('div', { class: 'row' }, [
         panelButton('', t('rotateLeft'), [svg(ICON_ROT_RIGHT, true)], () => actions.rotateLeft()),
         panelButton('', t('rotateRight'), [svg(ICON_ROT_RIGHT)], () => actions.rotateRight()),
         panelButton('', t('reset'), [el('span', { text: t('reset') })], () => actions.resetRotation()),
       ]);
+
+      const doStep = (fn) => {
+        if (fn() === false) flash(t('pauseFirst'));
+      };
+      stepLabel = el('span');
+      const back = panelButton('', t('stepBack'), [svg(ICON_PREV)], () => doStep(actions.stepBack));
+      const fwd = panelButton('', t('stepForward'), [svg(ICON_NEXT)], () => doStep(actions.stepForward));
+      stepBtns = [back, fwd];
+      const stepRow = el('div', { class: 'row' }, [back, el('div', { class: 'val' }, [stepLabel]), fwd]);
+      fpsEl = el('span', { class: 'fps' });
+      const chipRow = el('div', { class: 'row', style: 'margin-top:6px' });
+      cfg.step.multipliers.forEach((m) => {
+        const c = panelButton('chip', t('stepMult', { n: m }), [el('span', { text: 'x' + m })], () =>
+          actions.setMultiplier(m)
+        );
+        chips.set(m, c);
+        chipRow.appendChild(c);
+      });
+      chipRow.appendChild(fpsEl);
+
+      const report = (okKey) => (r) => flash(r && r.ok ? t(okKey) : t('captureFailed'));
+      const saveBtn = panelButton('grow', t('saveFrameTip'), [svg(ICON_SAVE), el('span', { text: t('saveFrame') })], () =>
+        Promise.resolve(actions.saveFrame()).then(report('saved'))
+      );
+      const copyBtn = panelButton('', t('copyFrame'), [svg(ICON_COPY)], () =>
+        Promise.resolve(actions.copyFrame()).then(report('copied'))
+      );
+      statusEl = el('div', { class: 'st', 'aria-live': 'polite' });
+
       const header = el('div', { class: 'hd' }, [
         el('span', { class: 'ttl', text: 'TesseraFlip' }),
         panelButton('ghost', t('close'), [svg(ICON_CLOSE)], () => {
@@ -116,7 +172,13 @@
       ]);
       const panel = el('div', { class: 'panel', role: 'dialog', 'aria-label': t('toolsTitle') }, [
         header,
-        el('div', {}, [label, row]),
+        el('div', {}, [label, rotRow]),
+        el('div', { class: 'sec' }, [el('div', { class: 'lbl', text: t('stepTitle') }), stepRow, chipRow]),
+        el('div', { class: 'sec' }, [
+          el('div', { class: 'lbl', text: t('frameTitle') }),
+          el('div', { class: 'row' }, [saveBtn, copyBtn]),
+        ]),
+        statusEl,
       ]);
       shadow.appendChild(style);
       shadow.appendChild(panel);
@@ -244,7 +306,10 @@
         unmount();
         player = found.player;
         attempts = 0;
-        this.setAngle(opts.getAngle ? opts.getAngle() : 0);
+        const st = opts.getState ? opts.getState() : { angle: 0, step: null, paused: true };
+        this.setAngle(st.angle);
+        if (st.step) this.setStep(st.step);
+        this.setPaused(st.paused);
         timer = root.setTimeout(tryMount, 0);
       },
       unmount,
@@ -257,6 +322,16 @@
         if (!label) return;
         label.textContent = a === 0 ? t('rotation') : t('rotationNow', { n: a });
       },
+      setPaused(paused) {
+        stepBtns.forEach((b) => b.classList.toggle('dim', !paused));
+      },
+      setStep(st) {
+        if (!stepLabel) return;
+        stepLabel.textContent = t('stepSize', { n: st.mult });
+        chips.forEach((c, m) => c.classList.toggle('on', m === st.mult));
+        fpsEl.textContent = (st.measured ? '' : '\u2248') + st.fps + ' fps';
+      },
+      flash,
       getMode: () => mode,
       isOpen: () => open,
     };
