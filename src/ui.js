@@ -26,7 +26,8 @@
     '.val{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px}',
     'button.chip{height:26px;min-width:34px;padding:0 6px}',
     'button.on{background:rgba(62,166,255,.25);border-color:#3ea6ff}',
-    'button.dim{opacity:.45}',
+    'button.dim,button.dim:hover{opacity:.3;cursor:not-allowed;background:rgba(255,255,255,.04);border-style:dashed}',
+    '.val.muted{color:rgba(255,255,255,.55)}',
     '.fps{margin-left:auto;align-self:center;font-size:11px;white-space:nowrap;color:rgba(255,255,255,.6)}',
     '.st{min-height:16px;margin-top:10px;font-size:12px;color:rgba(255,255,255,.85)}',
     'svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}',
@@ -49,6 +50,9 @@
     let fpsEl = null;
     let statusEl = null;
     let stepBtns = [];
+    let curStep = null;
+    let isPaused = true;
+    let valEl = null;
     const chips = new Map();
     let flashTimer = null;
     let mode = 'none';
@@ -101,6 +105,15 @@
       setOpen(false);
     }
 
+    // While playing, the centre text says so (muted); while paused it shows
+    // how many frames one press jumps.
+    function renderStepLabel() {
+      if (!stepLabel) return;
+      valEl.classList.toggle('muted', !isPaused);
+      if (!isPaused) stepLabel.textContent = t('playing');
+      else if (curStep) stepLabel.textContent = t('stepSize', { n: curStep.mult });
+    }
+
     function flash(text) {
       if (!statusEl) return;
       statusEl.textContent = text;
@@ -142,7 +155,8 @@
       const back = panelButton('', t('stepBack'), [svg(ICON_PREV)], () => doStep(actions.stepBack));
       const fwd = panelButton('', t('stepForward'), [svg(ICON_NEXT)], () => doStep(actions.stepForward));
       stepBtns = [back, fwd];
-      const stepRow = el('div', { class: 'row' }, [back, el('div', { class: 'val' }, [stepLabel]), fwd]);
+      valEl = el('div', { class: 'val' }, [stepLabel]);
+      const stepRow = el('div', { class: 'row' }, [back, valEl, fwd]);
       fpsEl = el('span', { class: 'fps' });
       const chipRow = el('div', { class: 'row', style: 'margin-top:6px' });
       cfg.step.multipliers.forEach((m) => {
@@ -323,13 +337,16 @@
         label.textContent = a === 0 ? t('rotation') : t('rotationNow', { n: a });
       },
       setPaused(paused) {
+        isPaused = paused;
         stepBtns.forEach((b) => b.classList.toggle('dim', !paused));
+        renderStepLabel();
       },
       setStep(st) {
         if (!stepLabel) return;
-        stepLabel.textContent = t('stepSize', { n: st.mult });
+        curStep = st;
         chips.forEach((c, m) => c.classList.toggle('on', m === st.mult));
         fpsEl.textContent = (st.measured ? '' : '\u2248') + st.fps + ' fps';
+        renderStepLabel();
       },
       flash,
       getMode: () => mode,
