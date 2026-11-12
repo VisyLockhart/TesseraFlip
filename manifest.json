@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "TesseraFlip",
+  "version": "0.0.1",
+  "description": "Rotate, step, and save YouTube frames.",
+  "minimum_chrome_version": "111",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": [
+        "src/config.js",
+        "src/locator.js",
+        "src/controller.js",
+        "src/main.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

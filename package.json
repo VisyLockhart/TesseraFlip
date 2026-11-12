@@ -1,0 +1,9 @@
+{
+  "name": "tesseraflip",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Rotate, step, and save YouTube frames.",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  }
+}
